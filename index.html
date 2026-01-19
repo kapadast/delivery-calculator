@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Калькулятор реальной стоимости доставки на маркетплейсах</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 600px;
+            width: 100%;
+            padding: 40px;
+        }
+
+        h1 {
+            color: #2d3748;
+            font-size: 28px;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .subtitle {
+            color: #718096;
+            font-size: 14px;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+
+        .input-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            color: #4a5568;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .hint {
+            color: #a0aec0;
+            font-size: 12px;
+            margin-top: 4px;
+            font-style: italic;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 16px 32px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .results {
+            margin-top: 30px;
+            padding: 25px;
+            background: #f7fafc;
+            border-radius: 12px;
+            border-left: 4px solid #667eea;
+            display: none;
+        }
+
+        .results.show {
+            display: block;
+            animation: slideIn 0.4s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .result-item {
+            margin-bottom: 20px;
+        }
+
+        .result-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .result-label {
+            color: #4a5568;
+            font-size: 14px;
+            margin-bottom: 6px;
+            font-weight: 500;
+        }
+
+        .result-value {
+            color: #2d3748;
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .result-value.danger {
+            color: #e53e3e;
+        }
+
+        .result-value.warning {
+            color: #ed8936;
+        }
+
+        .result-value.success {
+            color: #38a169;
+        }
+
+        .conclusion {
+            margin-top: 20px;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            font-size: 14px;
+            line-height: 1.6;
+            color: #4a5568;
+        }
+
+        .conclusion strong {
+            color: #2d3748;
+        }
+
+        .formula {
+            background: #edf2f7;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-size: 13px;
+            color: #4a5568;
+            border-left: 3px solid #667eea;
+        }
+
+        .footer {
+            margin-top: 30px;
+            text-align: center;
+            color: #a0aec0;
+            font-size: 12px;
+        }
+
+        .footer a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 640px) {
+            .container {
+                padding: 30px 20px;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+
+            .result-value {
+                font-size: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>💰 Калькулятор реальной стоимости доставки</h1>
+        <p class="subtitle">Узнайте настоящую цену доставки на Wildberries и Ozon с учётом всех скрытых издержек</p>
+
+        <form id="calculatorForm">
+            <div class="input-group">
+                <label for="tariff">Тариф маркетплейса за месяц (₽)</label>
+                <input type="number" id="tariff" placeholder="Например: 50000" required>
+                <div class="hint">Сумма из раздела "Логистика" в отчётах МП</div>
+            </div>
+
+            <div class="input-group">
+                <label for="fines">Штрафы за месяц (₽)</label>
+                <input type="number" id="fines" placeholder="Например: 15000" required>
+                <div class="hint">Из раздела "Удержания": габариты, срыв SLA, пересорты</div>
+            </div>
+
+            <div class="input-group">
+                <label for="outOfStockDays">Дни простоя (out of stock)</label>
+                <input type="number" id="outOfStockDays" placeholder="Например: 7" required>
+                <div class="hint">Сколько дней товар отсутствовал на складе МП за месяц</div>
+            </div>
+
+            <div class="input-group">
+                <label for="avgRevenue">Средний оборот в день (₽)</label>
+                <input type="number" id="avgRevenue" placeholder="Например: 30000" required>
+                <div class="hint">Средний дневной оборот по этому товару</div>
+            </div>
+
+            <div class="input-group">
+                <label for="orders">Количество заказов за месяц</label>
+                <input type="number" id="orders" placeholder="Например: 500" required>
+                <div class="hint">Общее количество доставленных заказов</div>
+            </div>
+
+            <button type="submit" class="btn">Рассчитать реальную стоимость</button>
+        </form>
+
+        <div class="results" id="results">
+            <div class="result-item">
+                <div class="result-label">Тариф МП на 1 заказ</div>
+                <div class="result-value" id="tariffPerOrder">—</div>
+            </div>
+
+            <div class="result-item">
+                <div class="result-label">Скрытые издержки на 1 заказ</div>
+                <div class="result-value warning" id="hiddenCosts">—</div>
+            </div>
+
+            <div class="result-item">
+                <div class="result-label">Реальная стоимость на 1 заказ</div>
+                <div class="result-value danger" id="realCost">—</div>
+            </div>
+
+            <div class="result-item">
+                <div class="result-label">Разница с тарифом</div>
+                <div class="result-value danger" id="difference">—</div>
+            </div>
+
+            <div class="conclusion" id="conclusion">
+                —
+            </div>
+
+            <div class="formula">
+                <strong>Формула расчёта:</strong><br>
+                Реальная стоимость = (Тариф МП + Штрафы + Потери от простоев) / Количество заказов
+            </div>
+        </div>
+
+        <div class="footer">
+            Калькулятор от <a href="https://t.me/KSASystem" target="_blank">KSA | Архитектура бизнес процессов</a>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('calculatorForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            // Получаем значения
+            const tariff = parseFloat(document.getElementById('tariff').value);
+            const fines = parseFloat(document.getElementById('fines').value);
+            const outOfStockDays = parseFloat(document.getElementById('outOfStockDays').value);
+            const avgRevenue = parseFloat(document.getElementById('avgRevenue').value);
+            const orders = parseFloat(document.getElementById('orders').value);
+
+            // Расчёты
+            const lostRevenue = outOfStockDays * avgRevenue;
+            const totalCost = tariff + fines + lostRevenue;
+            
+            const tariffPerOrder = tariff / orders;
+            const hiddenCostsPerOrder = (fines + lostRevenue) / orders;
+            const realCostPerOrder = totalCost / orders;
+            const multiplier = realCostPerOrder / tariffPerOrder;
+
+            // Заполняем результаты
+            document.getElementById('tariffPerOrder').textContent = tariffPerOrder.toFixed(0) + ' ₽';
+            document.getElementById('hiddenCosts').textContent = hiddenCostsPerOrder.toFixed(0) + ' ₽';
+            document.getElementById('realCost').textContent = realCostPerOrder.toFixed(0) + ' ₽';
+            document.getElementById('difference').textContent = 'в ' + multiplier.toFixed(1) + ' раза';
+
+            // Формируем вывод
+            let conclusionText = '';
+            if (multiplier < 1.5) {
+                conclusionText = `<strong>✅ Хорошо:</strong> Реальная стоимость доставки всего в ${multiplier.toFixed(1)} раза выше тарифа. Скрытые издержки под контролем. Продолжайте мониторить штрафы и простои.`;
+            } else if (multiplier < 2.5) {
+                conclusionText = `<strong>⚠️ Внимание:</strong> Реальная стоимость в ${multiplier.toFixed(1)} раза выше тарифа МП. Скрытые издержки ${hiddenCostsPerOrder.toFixed(0)}₽ на заказ съедают прибыль. Проверьте: штрафы за габариты, срывы SLA, влияние out of stock на позиции.`;
+            } else {
+                conclusionText = `<strong>🚨 Критично:</strong> Реальная стоимость в ${multiplier.toFixed(1)} раза выше тарифа! Скрытые издержки ${hiddenCostsPerOrder.toFixed(0)}₽ на заказ могут убить модель. Срочно: пересчитайте юнит-экономику, найдите источник штрафов, оптимизируйте схему доставки.`;
+            }
+
+            document.getElementById('conclusion').innerHTML = conclusionText;
+
+            // Показываем результаты
+            document.getElementById('results').classList.add('show');
+
+            // Скроллим к результатам
+            document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        });
+    </script>
+</body>
+</html>
